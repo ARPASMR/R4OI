@@ -11,8 +11,9 @@ program t2m19
 !-----------------------------------------------------------------------------
 ! MS, nov 2019
 !  - mod anaguhiread e obsread per leggere dati e anagrafica scritti da R (UTM)
-!  - mod parametri per lavorare su griglia UTM 1.kmX1.km (come PRISMA); da 
-!    usare con oromaskutm_mauri.dat (e grazie mille a Maurizio Favaron!)
+!  - mod parametri per lavorare su griglia UTM:
+!    251x249  1.kmX1.km (come PRISMA) oromaskutm_mauri.dat 
+!    (e grazie mille a Maurizio Favaron!)
 !-------------------------------------------------------------------------------
  use SpatialStuff
  implicit none
@@ -407,7 +408,6 @@ program t2m19
   ! G4MSK: admin boundary mask
   !-----------------------------------------------------------------------
   write (6,*) 'now read orography and grid'
-  !call griduhird(FULFIORO, IIG, g4x,g4y, g4lon,g4lat,g4hgt,g4msk,g4uhi)
   call GetUTMOrography(FULFIORO, IIG, g4x, g4y, g4lon, g4lat, g4hgt, g4msk,g4uhi)
   write (6,*) 'total number of gridpoints IM IIG: ',IM,IIG
   !write (6,*) ' ok?'
@@ -1324,13 +1324,12 @@ end program t2m19
 ! SUBROUTINES AND FUNCTIONS (here)
 ! anaguhird
 ! obsread
-! griduhird
 ! stzuhiwri
 !***************************************************************************************************
 subroutine anaguhird(STAGFI,stid,sx,sy,slon,slat,shgt,suhi, KKA)
 !-------------------------------------------------------------------------------
 ! read station archive from GrADS "station" file
-! compute coordinates GB->lon,lat
+! compute coordinates UTM->lon,lat
 !
 ! header 28 bytes= 7 *4bytes
 ! 1(1,2):  8 STID     CHARACTER*8 equiv BID(2)*4
@@ -1344,7 +1343,6 @@ subroutine anaguhird(STAGFI,stid,sx,sy,slon,slat,shgt,suhi, KKA)
 ! tutte le stazioni in anagrafica
 !-------------------------------------------------------------------------------
  use coords
-! use GAUSS_BOAGA
  use ll_utm
  implicit none
 
@@ -1374,7 +1372,6 @@ subroutine anaguhird(STAGFI,stid,sx,sy,slon,slat,shgt,suhi, KKA)
 
 !-----------------------------------------------------------------------
  type(GEO_COORD)   :: tLL
-! type(GAUSS_COORD) :: tGB
  type(UTM_COORD)   :: tUTM  ! tUTM%Zone tUTM%N tUTM%E (c4 r8 r8)
 
 !-----------------------------------------------------------------------
@@ -1488,15 +1485,6 @@ subroutine anaguhird(STAGFI,stid,sx,sy,slon,slat,shgt,suhi, KKA)
  !-----------------------------------------------------------------------
  do k=1,KKA
  ! coordinate conversion UTM-> lon,lat and variable choice
- ! coordinate conversion GB-> lon,lat and variable choice
-!  tGB%E = sx(k)
-!  tGB%N = sy(k)
-!  tGB%S = WEST
-
-!  tLL = gb_to_ll(tGB)
-
-!  slon(k) = tLL%Lon
-!  slat(k) = tLL%Lat
 
   tUTM%E = sx(K)
   tUTM%N = sy(k)
@@ -1739,74 +1727,6 @@ subroutine obsread(FULFIOB, nrec, KK, stid, yo, nvars, lpos)
 !-------------------------------------------------------------------------------
  return
 end subroutine obsread
-!*******************************************************************************
-subroutine griduhird(OROGRIFI, II, g4x, g4y, g4lon, g4lat, g4hgt, g4msk,g4uhi)
-!-------------------------------------------------------------------------------
-! GB
-!-------------------------------------------------------------------------------
- use coords
- use GAUSS_BOAGA
-
- implicit none
- integer, parameter :: INX=177, INY=174, IM=INX*INY
-
- real(4), dimension (IM) :: g4x, g4y, g4lon, g4lat, g4hgt, g4msk, g4uhi
-
- character(200) OROGRIFI
- integer :: II
-
-!-----------------------------------------------------------------------
- real(8) :: xmin, ymin, dx, dy
- integer :: ix, jy, i
-
-!-----------------------------------------------------------------------
- type(GEO_COORD)   :: tLL   ! tLL%Lat  tLL%Lon        (r8 r8)
- type(GAUSS_COORD) :: tGB   ! tGB%S  tGB%N  tGB%E     (i r8 r8)
-
-!-----------------------------------------------------------------------
-! character ans*1
-
-!===============================================================================
- II= IM
-! write (6,*) 'griduhird: II=',II
-
-!-----------------------------------------------------------------------
- xmin= 1436301.375d0
- ymin= 4916704.5d0
- dx= 1500.d0
- dy= 1500.d0
-
- do i=1,II
-  jy= (i-1) /INX +1
-  ix= i -(jy-1) *INX
-  !
-  tGB%E= xmin+ (ix -1) *dx
-  tGB%N= ymin+ (jy -1) *dy
-  tGB%S= WEST
-  !
-  tLL= gb_to_ll(tGB)
-  !
-  g4x(i)= sngl(tGB%E)
-  g4y(i)= sngl(tGB%N)
-  g4lon(i)= tLL%Lon
-  g4lat(i)= tLL%Lat
- end do
-
-!-----------------------------------------------------------------------
- write (6,*) 'reading grid and orography...'
- open (3, file= OROGRIFI, form= 'UNFORMATTED', access='DIRECT', recl=4*IM)
- read (3,rec=1) g4hgt
- read (3,rec=2) g4msk
-! uhi e' il sesto campo:
- read (3,rec=6) g4uhi
- close (3)
- write (6,*) 'griduhird: orography read, now return'
- !write (6,*) ' ok?'
- !read (5,'(a1)') ans
-
-!-------------------------------------------------------------------------------
- return
-end subroutine griduhird
 !*******************************************************************************
 subroutine stzuhiwri(FULFIST, nrec, KK, stid, s4x, s4y, shgt, so, sb, sa, sav, suhi)
 !-------------------------------------------------------------------------------
