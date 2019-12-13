@@ -6,7 +6,7 @@
 #
 
 undef<- -999.9
-main_dir<-"/home/meteo/sviluppo/oi/"
+main_dir<-"/home/meteo/sviluppo/oi/R/"
 stnmap<-"/usr/bin/stnmap"
 
 file_log<-paste(main_dir,"prova.log",sep="")
@@ -16,20 +16,11 @@ anag<-file(description=file_dat_anagrafica,open="wb")
 file_ctl_anagrafica<-paste(main_dir,"anagrafica.ctl",sep="")
 file_map_anagrafica<-paste(main_dir,"anagrafica.map",sep="")
 
-file_dat_temperatura<-paste(main_dir,"temperatura.dat",sep="")
-t2m<-file(description=file_dat_temperatura,open="wb")
-file_ctl_temperatura<-paste(main_dir,"temperatura.ctl",sep="")
-file_map_temperatura<-paste(main_dir,"temperatura.map",sep="")
-
-file_dat_precipitazione<-paste(main_dir,"precipitazione.dat",sep="")
+file_dat_precipitazione<-paste(main_dir,"datiGRADS.dat",sep="")
 preci<-file(description=file_dat_precipitazione,open="wb")
-file_ctl_precipitazione<-paste(main_dir,"precipitazione.ctl",sep="")
-file_map_precipitazione<-paste(main_dir,"precipitazione.map",sep="")
-
-file_dat_umidita<-paste(main_dir,"umidita.dat",sep="")
-ur<-file(description=file_dat_umidita,open="wb")
-file_ctl_umidita<-paste(main_dir,"umidita.ctl",sep="")
-file_map_umidita<-paste(main_dir,"umidita.map",sep="")
+file_ctl_precipitazione<-paste(main_dir,"datiGRADS.ctl",sep="")
+file_map_precipitazione<-paste(main_dir,"datiGRADS.map",sep="")
+file_risk<-paste(main_dir,"pluvrisk.txt",sep="")
 
 library(DBI)
 library(RMySQL)
@@ -69,15 +60,31 @@ cat ( "---------------------------------- \n" , file = file_log,append=T)
 #    COLLEGAMENTO AL DB
 #___________________________________________________
 
-cat("collegamento al DB\n",file=file_log,append=T)
-MySQL(max.con=16,fetch.default.rec=500,force.reload=FALSE)
+
+cat("collegamento al DB...",file=file_log,append=T)
+drv<-dbDriver("MySQL")
+conn<-try(dbConnect(drv, user=as.character(Sys.getenv("MYSQL_USR")), password=as.character(Sys.getenv("MYSQL_PWD")), dbname=as.character(Sys.getenv("MYSQL_DBNAME")), host=as.character(Sys.getenv("MYSQL_HOST"))))
+
+if (inherits(conn,"try-error")) {
+  print( "ERRORE nell'apertura della connessione al DB \n")
+  print( "chiusura connessione malriuscita ed uscita dal programma \n")
+  dbDisconnect(conn)
+  rm(conn)
+  dbUnloadDriver(drv)
+  quit(status=1)
+}
+
+
+
+#cat("collegamento al DB\n",file=file_log,append=T)
+#MySQL(max.con=16,fetch.default.rec=500,force.reload=FALSE)
 
 #definisco driver
-drv<-dbDriver("MySQL")
+#drv<-dbDriver("MySQL")
 
 #apro connessione con il db descritto nei parametri del gruppo "tabella_rif"
 #nel file "/home/meteo/.my.cnf
-conn<-dbConnect(drv,group="Visualizzazione_Sinergico")
+#conn<-dbConnect(drv,group="Visualizzazione_Sinergico")
 
 #___________________________________________________
 #    query anagrafica
@@ -89,7 +96,7 @@ cat ( "---------------------------------- \n" , file = file_log,append=T)
 
 # stazioni e tipologia
 
-query<- paste("select a.IDstazione, b.IDsensore,NOMEtipologia from A_Stazioni as a, A_Sensori as b, A_Sensori2Destinazione as c  where a.IDstazione=b.IDstazione and b.IDsensore=c.IDsensore and Destinazione=11 and c.DataInizio < ",data_DB," and (c.DataFine is NULL OR c.DataFine > ",data_DB,")",sep="")
+query<- paste("select a.IDstazione, b.IDsensore,NOMEtipologia from A_Stazioni as a, A_Sensori as b, A_Sensori2Destinazione as c  where a.IDstazione=b.IDstazione and b.IDsensore=c.IDsensore and Destinazione=11 and c.DataInizio < ",data_DB," and (c.DataFine is NULL OR c.DataFine > ",data_DB,") ",sep="")
 
 q <- try(dbGetQuery(conn, query),silent=TRUE)
   if (inherits(q,"try-error")) {
@@ -98,7 +105,7 @@ q <- try(dbGetQuery(conn, query),silent=TRUE)
   }
 
 # numero stazioni con almeno una destinazione OI
-query_num<- paste("select a.IDstazione, count(a.IDstazione) as sensori,UTM_Nord,UTM_Est,Quota,UrbanWeight,IDrete from A_Stazioni as a, A_Sensori as b, A_Sensori2Destinazione as c  where a.IDstazione=b.IDstazione and b.IDsensore=c.IDsensore and Destinazione=11 and c.DataInizio < ",data_DB," and (c.DataFine is NULL OR c.DataFine > ",data_DB,") group by a.IDstazione",sep="")
+query_num<- paste("select a.IDstazione, count(a.IDstazione) as sensori,Y(a.CoordUTM),X(a.CoordUTM),Quota,UrbanWeight,IDrete from A_Stazioni as a, A_Sensori as b, A_Sensori2Destinazione as c  where a.IDstazione=b.IDstazione and b.IDsensore=c.IDsensore and Destinazione=11 and c.DataInizio < ",data_DB," and (c.DataFine is NULL OR c.DataFine > ",data_DB,") group by a.IDstazione",sep="")
 
 num <- try(dbGetQuery(conn, query_num),silent=TRUE)
   if (inherits(num,"try-error")) {
@@ -107,6 +114,8 @@ num <- try(dbGetQuery(conn, query_num),silent=TRUE)
   }
 
 num_staz <- length(num[,1])
+
+cat(paste("Numero di stazioni con almeno una destinazione OI: ",num_staz,"\n \n", sep=""),file = file_log,append=T)
 
 # scrivo il file dati binario ed il ctl
 # NOTE:-----------------------------------
@@ -117,7 +126,7 @@ num_staz <- length(num[,1])
 
 for(i in 1:num_staz) {
 # HEADER-----------------------------------
-	writeBin(paste("LO",sprintf("%05d", num[i,1]),sep=""),anag,size=8)
+	writeBin(paste("Lo",sprintf("%05d", num[i,1]),sep=""),anag,size=8)
 	writeBin(readBrukerFlexData:::.double2singlePrecision(num[i,3]),anag,size=4)
         writeBin(readBrukerFlexData:::.double2singlePrecision(num[i,4]),anag,size=4)
 # t - Time in grid-relative units  
@@ -131,7 +140,7 @@ for(i in 1:num_staz) {
 # Quota
 	writeBin(readBrukerFlexData:::.double2singlePrecision(num[i,5]),anag,size=4)
 # Indice urbanita
-        if ( length(num[i,6])==0 ) { 
+        if ( is.na(num[i,6]) ) { 
 		writeBin(readBrukerFlexData:::.double2singlePrecision(undef),anag,size=4) 
 	} else { 
 		writeBin(readBrukerFlexData:::.double2singlePrecision(num[i,6]),anag,size=4) 
@@ -141,24 +150,33 @@ for(i in 1:num_staz) {
 # ID Termometro
 	if ( length(q[which(q[,3]=="T" & q[,1] == num[i,1]),2])==0 ) { 
 		writeBin(readBrukerFlexData:::.double2singlePrecision(undef),anag,size=4)
+	} else if (length(q[which(q[,3]=="T" & q[,1] == num[i,1]),2])>1 )  {
+		cat(paste(" Trovato sensore doppio nella stazione: ID ",num[i,1],"\n",sep=""), file=file_log, append=T)
+		quit(status=1)
 	} else { 
 		writeBin(readBrukerFlexData:::.double2singlePrecision(q[which(q[,3]=="T" & q[,1] == num[i,1]),2]),anag,size=4)
 	}
 #	ID Igrometro	
 	if ( length(q[which(q[,3]=="UR" & q[,1] == num[i,1]),2])==0 ) { 
 		writeBin(readBrukerFlexData:::.double2singlePrecision(undef),anag,size=4)
+	} else if (length(q[which(q[,3]=="UR" & q[,1] == num[i,1]),2])>1 )  {
+		cat(paste(" Trovato sensore doppio nella stazione: ID ",num[i,1],"\n",sep=""), file=file_log, append=T)
+		quit(status=1)
 	} else { 
 		writeBin(readBrukerFlexData:::.double2singlePrecision(q[which(q[,3]=="UR" & q[,1] == num[i,1]),2]),anag,size=4)
 	}
 #       ID pluviometro
 	if ( length(q[which(q[,3]=="PP" & q[,1] == num[i,1]),2])==0 ) { 
 		writeBin(readBrukerFlexData:::.double2singlePrecision(undef),anag,size=4)
+	} else if (length(q[which(q[,3]=="PP" & q[,1] == num[i,1]),2])>1 )  {
+		cat(paste(" Trovato sensore doppio nella stazione: ID ",num[i,1],"\n",sep=""), file=file_log, append=T)
+		quit(status=1)
 	} else { 
 		writeBin(readBrukerFlexData:::.double2singlePrecision(q[which(q[,3]=="PP" & q[,1] == num[i,1]),2]),anag,size=4)
 	}
 }
 # time group terminator - nell'anagrafica ho un solo istante, quindi finisco il file...
-writeBin(paste("LO",sprintf("%05d", num[i,1]),sep=""),anag,size=8)
+writeBin(paste("Lo",sprintf("%05d", num[i,1]),sep=""),anag,size=8)
 writeBin(readBrukerFlexData:::.double2singlePrecision(num[num_staz,3]),anag,size=4)
 writeBin(readBrukerFlexData:::.double2singlePrecision(num[num_staz,4]),anag,size=4)
 writeBin(readBrukerFlexData:::.double2singlePrecision(0.0),anag,size=4)
@@ -206,66 +224,32 @@ cat( paste("Chiedo al DB METEO le misure dei termometri per l'ora  ",data_DB," \
 
 id_termometri <-q[which(q[,3]=="T"),2]
 lista_termometri <- paste(id_termometri,collapse=",")
-query_temp<-paste("select staz.IDstazione, Misura from M_Termometri_",anno," as mis, A_Stazioni as staz, A_Sensori as sens where staz.IDstazione=sens.IDstazione and sens.IDsensore=mis.IDsensore and flag_manuale!='E' and flag_automatica!='F' and Data_e_ora=",data_DB," and sens.IDsensore in (",lista_termometri,")",sep="")
+query_temp<-paste("select staz.IDstazione, Misura from M_Termometri_",anno," as mis, A_Stazioni as staz, A_Sensori as sens where staz.IDstazione=sens.IDstazione and sens.IDsensore=mis.IDsensore and flag_manuale!='E' and flag_automatica!='F' and Data_e_ora=",data_DB," and sens.IDsensore in (",lista_termometri,")  and mis.IDsensore not in (select IDsensore from A_ListaNera where (DataInizio< ",data_DB," and DataFine is NULL) or (DataInizio< ",data_DB," and DataFine>",data_DB,"));",sep="")
 temp <- try(dbGetQuery(conn, query_temp),silent=TRUE)
   if (inherits(temp,"try-error")) {
     cat(temp,"\n",file=file_log,append=T)
     quit(status=1)
   }
 
-#scrivo il file grads su tutte le stazioni con almeno una destinazione OI
-for(i in 1:num_staz) {
-# HEADER-----------------------------------
-	writeBin(paste("LO",sprintf("%05d", num[i,1]),sep=""),t2m,size=8)
-	writeBin(readBrukerFlexData:::.double2singlePrecision(num[i,3]),t2m,size=4)
-        writeBin(readBrukerFlexData:::.double2singlePrecision(num[i,4]),t2m,size=4)
-# t - Time in grid-relative units  
-        writeBin(readBrukerFlexData:::.double2singlePrecision(0.0),t2m,size=4)
-# nlev - Number of data groups following the header: 1 surface group + vert levls
-#        writeBin(readBrukerFlexData:::.double2singlePrecision(1),anag,size=4) questa non funziona!!
-        writeBin(as.integer(1),t2m,size=4) # questa si!!
-# flag - If set to 1, then there are surface variables following the header.
-        writeBin(as.integer(1),t2m,size=4)
-# Variabili---------------------------------
-#       T
-        if ( length(temp[which(temp[,1] == num[i,1]),1])==0 ) { 
-		writeBin( readBrukerFlexData:::.double2singlePrecision(undef),t2m,size=4)
-        } else {
-                writeBin( readBrukerFlexData:::.double2singlePrecision(temp[which(temp[,1]== num[i,1]),2]),t2m,size=4)
-        }
-}
-# time group terminator - nell'anagrafica ho un solo istante, quindi finisco il file...
-writeBin(paste("LO",sprintf("%05d", num[i,1]),sep=""),t2m,size=8)
-writeBin(readBrukerFlexData:::.double2singlePrecision(num[num_staz,3]),t2m,size=4)
-writeBin(readBrukerFlexData:::.double2singlePrecision(num[num_staz,4]),t2m,size=4)
-writeBin(readBrukerFlexData:::.double2singlePrecision(0.0),t2m,size=4)
-writeBin(as.integer(0),t2m,size=4) 
-writeBin(as.integer(1),t2m,size=4)
-cat( "File temperatura.dat scritto, chiudo il file" ," \n\n" , file = file_log,append=TRUE)
-close(t2m)
 
+#___________________________________________________
+#
+#    query umidita relativa
+#__________________________________________________
 
-# scrivo il *.ctl
+cat ( "---------------------------------- \n" , file = file_log,append=T)
+cat ( "----------UMIDITA REL------------- \n" , file = file_log,append=T)
+cat ( "---------------------------------- \n" , file = file_log,append=T)
+cat( paste("Chiedo al DB METEO le misure degli igrometri per l'ora  ",data_DB," \n\n",sep="") , file = file_log,append=TRUE)
 
-cat(paste("DSET   ",file_dat_temperatura,"
-DTYPE  station
-STNMAP ",file_map_temperatura,"
-UNDEF  -999.9
-TITLE  Dati temperatura
-TDEF   1 linear ",ora,"Z",giorno,mese_grads,anno," 1hr
-VARS 1
-temp  0  99  Temperatura 2 metri
-ENDVARS",sep=""), file=file_ctl_temperatura)
-
-# genero il file di mappa
-#command<-paste(stnmap," -i ",file_ctl_temperatura, " >> ", file_log,sep="") #per event. debug
-command<-paste(stnmap," -i ",file_ctl_temperatura,sep="")
-output<-system(command)
-if (output!=0) {
-    cat("Errore nel generare il file stn map per Grads ","\n",file=file_log,append=T)
+id_igrometri <-q[which(q[,3]=="UR"),2]
+lista_igrometri <- paste(id_igrometri,collapse=",")
+query_urel<-paste("select staz.IDstazione, Misura from M_Igrometri_",anno," as mis, A_Stazioni as staz, A_Sensori as sens where staz.IDstazione=sens.IDstazione and sens.IDsensore=mis.IDsensore and flag_manuale!='E' and flag_automatica!='F' and Data_e_ora=",data_DB," and sens.IDsensore in (",lista_igrometri,") and mis.IDsensore not in (select IDsensore from A_ListaNera where (DataInizio< ",data_DB," and DataFine is NULL) or (DataInizio< ",data_DB," and DataFine>",data_DB,")); ",sep="")
+urel <- try(dbGetQuery(conn, query_urel),silent=TRUE)
+  if (inherits(urel,"try-error")) {
+    cat(urel,"\n",file=file_log,append=T)
     quit(status=1)
-}
-cat( "File temperatura.ctl e file temperatura.map scritti correttamente " ," \n\n" , file = file_log,append=TRUE)
+  }
 
 
 #___________________________________________________
@@ -280,17 +264,27 @@ cat( paste("Chiedo al DB METEO le misure dei pluviometri per l'ora  ",data_DB," 
 
 id_pluviometri <-q[which(q[,3]=="PP"),2]
 lista_pluviometri <- paste(id_pluviometri,collapse=",")
-query_pluv<-paste("select staz.IDstazione, Misura from M_Pluviometri_",anno," as mis, A_Stazioni as staz, A_Sensori as sens where staz.IDstazione=sens.IDstazione and sens.IDsensore=mis.IDsensore and flag_manuale!='E' and flag_automatica!='F' and Data_e_ora=",data_DB," and sens.IDsensore in (",lista_pluviometri,")",sep="")
+query_pluv<-paste("select staz.IDstazione, Misura from M_Pluviometri_",anno," as mis, A_Stazioni as staz, A_Sensori as sens where staz.IDstazione=sens.IDstazione and sens.IDsensore=mis.IDsensore and flag_manuale!='E' and flag_automatica!='F' and Data_e_ora=",data_DB," and sens.IDsensore in (",lista_pluviometri,") and mis.IDsensore not in (select IDsensore from A_ListaNera where (DataInizio< ",data_DB," and DataFine is NULL) or (DataInizio< ",data_DB," and DataFine>",data_DB,")); " ,sep="")
 pluv <- try(dbGetQuery(conn, query_pluv),silent=TRUE)
   if (inherits(pluv,"try-error")) {
     cat(temp,"\n",file=file_log,append=T)
     quit(status=1)
   }
 
+#_____________________________________________________
+#
 #scrivo il file grads su tutte le stazioni con almeno una destinazione OI
+#
+#_____________________________________________________
+
+cat ( "---------------------------------- \n" , file = file_log,append=T)
+cat ( "----Scrittura file GRADS---------- \n" , file = file_log,append=T)
+cat ( "---------------------------------- \n" , file = file_log,append=T)
+
+
 for(i in 1:num_staz) {
 # HEADER-----------------------------------
-	writeBin(paste("LO",sprintf("%05d", num[i,1]),sep=""),preci,size=8)
+	writeBin(paste("Lo",sprintf("%05d", num[i,1]),sep=""),preci,size=8)
 	writeBin(readBrukerFlexData:::.double2singlePrecision(num[i,3]),preci,size=4)
         writeBin(readBrukerFlexData:::.double2singlePrecision(num[i,4]),preci,size=4)
 # t - Time in grid-relative units  
@@ -307,9 +301,21 @@ for(i in 1:num_staz) {
         } else {
                 writeBin( readBrukerFlexData:::.double2singlePrecision(pluv[which(pluv[,1]== num[i,1]),2]),preci,size=4)
         }
+#       T
+        if ( length(temp[which(temp[,1] == num[i,1]),1])==0 ) {
+                writeBin( readBrukerFlexData:::.double2singlePrecision(undef),preci,size=4)
+        } else {
+                writeBin( readBrukerFlexData:::.double2singlePrecision(temp[which(temp[,1]== num[i,1]),2]),preci,size=4)
+        }
+#       UR
+        if ( length(urel[which(urel[,1] == num[i,1]),1])==0 ) {
+                writeBin( readBrukerFlexData:::.double2singlePrecision(undef),preci,size=4)
+        } else {
+                writeBin( readBrukerFlexData:::.double2singlePrecision(urel[which(urel[,1]== num[i,1]),2]),preci,size=4)
+        }
 }
 # time group terminator - nell'anagrafica ho un solo istante, quindi finisco il file...
-writeBin(paste("LO",sprintf("%05d", num[i,1]),sep=""),preci,size=8)
+writeBin(paste("Lo",sprintf("%05d", num[i,1]),sep=""),preci,size=8)
 writeBin(readBrukerFlexData:::.double2singlePrecision(num[num_staz,3]),preci,size=4)
 writeBin(readBrukerFlexData:::.double2singlePrecision(num[num_staz,4]),preci,size=4)
 writeBin(readBrukerFlexData:::.double2singlePrecision(0.0),preci,size=4)
@@ -318,19 +324,34 @@ writeBin(as.integer(1),preci,size=4)
 cat( "File precipitazione.dat scritto, chiudo il file" ," \n\n" , file = file_log,append=TRUE)
 close(preci)
 
-
+#______________________________________________
+#
 # scrivo il *.ctl
+#______________________________________________
+
+cat ( "---------------------------------- \n" , file = file_log,append=T)
+cat ( "--Scrittura del file *.ctl-------- \n" , file = file_log,append=T)
+cat ( "---------------------------------- \n" , file = file_log,append=T)
+
 cat(paste("DSET   ",file_dat_precipitazione,"
 DTYPE  station
 STNMAP ",file_map_precipitazione,"
 UNDEF  -999.9
 TITLE  Dati precipitazione
 TDEF   1 linear ",ora,"Z",giorno,mese_grads,anno," 1hr
-VARS 1
-temp  0  99  precipitazione
+VARS 3 
+prec  0  99  precipitazione
+temp  0  99  temperatura
+urel  0  99  umidita relativa
 ENDVARS",sep=""), file=file_ctl_precipitazione)
 
+#______________________________________________
+#
 # genero il file di mappa
+#_____________________________________________
+
+
+
 command<-paste(stnmap," -i ",file_ctl_precipitazione,sep="")
 #command<-paste(stnmap," -i ",file_ctl_precipitazione, " >> ", file_log,sep="")
 output<-system(command)
@@ -341,79 +362,22 @@ if (output!=0) {
 cat( "File precipitazione.ctl e file precipitazione.map scritti correttamente " ," \n\n" , file = file_log,append=TRUE)
 
 
-
-#___________________________________________________
+#______________________________________________________
 #
-#    query umidita relativa
-#__________________________________________________
+# genero un file 'pluvrisk.txt' con elenco dei pluviometri riscaldati
+#______________________________________________________
 
-cat ( "---------------------------------- \n" , file = file_log,append=T)
-cat ( "----------UMIDITA REL------------- \n" , file = file_log,append=T)
-cat ( "---------------------------------- \n" , file = file_log,append=T)
-cat( paste("Chiedo al DB METEO le misure degli igrometri per l'ora  ",data_DB," \n\n",sep="") , file = file_log,append=TRUE)
-
-id_igrometri <-q[which(q[,3]=="UR"),2]
-lista_igrometri <- paste(id_igrometri,collapse=",")
-query_urel<-paste("select staz.IDstazione, Misura from M_Igrometri_",anno," as mis, A_Stazioni as staz, A_Sensori as sens where staz.IDstazione=sens.IDstazione and sens.IDsensore=mis.IDsensore and flag_manuale!='E' and flag_automatica!='F' and Data_e_ora=",data_DB," and sens.IDsensore in (",lista_igrometri,")",sep="")
-urel <- try(dbGetQuery(conn, query_urel),silent=TRUE)
-  if (inherits(urel,"try-error")) {
-    cat(urel,"\n",file=file_log,append=T)
+query_risk <- paste( "select a.IDstazione from A_Sensori as a, A_Sensori_specifiche as b where a.IDsensore=b.IDsensore and a.IDsensore in (",lista_pluviometri,") and b.RiscVent='Yes' and (DataDisistallazione is NULL or DataDisistallazione='0000-00-00') ; " ,sep="")
+print(query_risk)
+risk <- try(dbGetQuery(conn, query_risk),silent=TRUE)
+  if (inherits(risk,"try-error")) {
+    cat(temp,"\n",file=file_log,append=T)
     quit(status=1)
   }
 
-#scrivo il file grads su tutte le stazioni con almeno una destinazione OI
-for(i in 1:num_staz) {
-# HEADER-----------------------------------
-	writeBin(paste("LO",sprintf("%05d", num[i,1]),sep=""),ur,size=8)
-	writeBin(readBrukerFlexData:::.double2singlePrecision(num[i,3]),ur,size=4)
-        writeBin(readBrukerFlexData:::.double2singlePrecision(num[i,4]),ur,size=4)
-# t - Time in grid-relative units  
-        writeBin(readBrukerFlexData:::.double2singlePrecision(0.0),ur,size=4)
-# nlev - Number of data groups following the header: 1 surface group + vert levls
-#        writeBin(readBrukerFlexData:::.double2singlePrecision(1),anag,size=4) questa non funziona!!
-        writeBin(as.integer(1),ur,size=4) # questa si!!
-# flag - If set to 1, then there are surface variables following the header.
-        writeBin(as.integer(1),ur,size=4)
-# Variabili---------------------------------
-#       UR
-        if ( length(temp[which(urel[,1] == num[i,1]),1])==0 ) { 
-		writeBin( readBrukerFlexData:::.double2singlePrecision(undef),ur,size=4)
-        } else {
-                writeBin( readBrukerFlexData:::.double2singlePrecision(urel[which(urel[,1]== num[i,1]),2]),ur,size=4)
-        }
-}
-# time group terminator - nell'anagrafica ho un solo istante, quindi finisco il file...
-writeBin(paste("LO",sprintf("%05d", num[i,1]),sep=""),ur,size=8)
-writeBin(readBrukerFlexData:::.double2singlePrecision(num[num_staz,3]),ur,size=4)
-writeBin(readBrukerFlexData:::.double2singlePrecision(num[num_staz,4]),ur,size=4)
-writeBin(readBrukerFlexData:::.double2singlePrecision(0.0),ur,size=4)
-writeBin(as.integer(0),ur,size=4) 
-writeBin(as.integer(1),ur,size=4)
-cat( "File umidita.dat scritto, chiudo il file" ," \n\n" , file = file_log,append=TRUE)
-close(ur)
+print(risk)
 
 
-# scrivo il *.ctl
-
-cat(paste("DSET   ",file_dat_umidita,"
-DTYPE  station
-STNMAP ",file_map_umidita,"
-UNDEF  -999.9
-TITLE  Dati umidita
-TDEF   1 linear ",ora,"Z",giorno,mese_grads,anno," 1hr
-VARS 1
-temp  0  99  umidita 2 metri
-ENDVARS",sep=""), file=file_ctl_umidita)
-
-# genero il file di mappa
-command<-paste(stnmap," -i ",file_ctl_umidita,sep="")
-#command<-paste(stnmap," -i ",file_ctl_umidita, " >> ", file_log,sep="")
-output<-system(command)
-if (output!=0) {
-    cat("Errore nel generare il file stn map per Grads ","\n",file=file_log,append=T)
-    quit(status=1)
-}
-cat( "File umidita.ctl e file umidita.map scritti correttamente " ," \n\n" , file = file_log,append=TRUE)
 #___________________________________________________
 #    DISCONNESSIONE DAL DB
 #___________________________________________________
