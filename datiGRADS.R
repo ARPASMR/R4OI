@@ -6,7 +6,7 @@
 #
 
 undef<- -999.9
-main_dir<-"/home/meteo/sviluppo/oi/R/"
+main_dir<-"./"
 stnmap<-"/usr/bin/stnmap"
 
 file_log<-paste(main_dir,"prova.log",sep="")
@@ -24,7 +24,6 @@ file_risk<-paste(main_dir,"pluvrisk.txt",sep="")
 
 library(DBI)
 library(RMySQL)
-library(RODBC)
 library(readBrukerFlexData) # serve una funzione della libreria per convertire double -> single
 
 
@@ -73,18 +72,6 @@ if (inherits(conn,"try-error")) {
   dbUnloadDriver(drv)
   quit(status=1)
 }
-
-
-
-#cat("collegamento al DB\n",file=file_log,append=T)
-#MySQL(max.con=16,fetch.default.rec=500,force.reload=FALSE)
-
-#definisco driver
-#drv<-dbDriver("MySQL")
-
-#apro connessione con il db descritto nei parametri del gruppo "tabella_rif"
-#nel file "/home/meteo/.my.cnf
-#conn<-dbConnect(drv,group="Visualizzazione_Sinergico")
 
 #___________________________________________________
 #    query anagrafica
