@@ -308,7 +308,7 @@ writeBin(readBrukerFlexData:::.double2singlePrecision(num[num_staz,4]),preci,siz
 writeBin(readBrukerFlexData:::.double2singlePrecision(0.0),preci,size=4)
 writeBin(as.integer(0),preci,size=4) 
 writeBin(as.integer(1),preci,size=4)
-cat( "File precipitazione.dat scritto, chiudo il file" ," \n\n" , file = file_log,append=TRUE)
+cat( "File datiGRADS.dat scritto, chiudo il file" ," \n\n" , file = file_log,append=TRUE)
 close(preci)
 
 #______________________________________________
@@ -346,7 +346,7 @@ if (output!=0) {
     cat("Errore nel generare il file stn map per Grads ","\n",file=file_log,append=T)
     quit(status=1)
 }
-cat( "File precipitazione.ctl e file precipitazione.map scritti correttamente " ," \n\n" , file = file_log,append=TRUE)
+cat( "File datiGRADS.ctl e file datiGRADS.map scritti correttamente " ," \n\n" , file = file_log,append=TRUE)
 
 
 #______________________________________________________
@@ -361,8 +361,8 @@ risk <- try(dbGetQuery(conn, query_risk),silent=TRUE)
     cat(temp,"\n",file=file_log,append=T)
     quit(status=1)
   }
-
 print(risk)
+write(risk$IDstazione,file_risk,ncolumns=1)
 
 
 #___________________________________________________
