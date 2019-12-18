@@ -354,14 +354,12 @@ cat( "File datiGRADS.ctl e file datiGRADS.map scritti correttamente " ," \n\n" ,
 # genero un file 'pluvrisk.txt' con elenco dei pluviometri riscaldati
 #______________________________________________________
 
-query_risk <- paste( "select a.IDstazione from A_Sensori as a, A_Sensori_specifiche as b where a.IDsensore=b.IDsensore and a.IDsensore in (",lista_pluviometri,") and b.RiscVent='Yes' and (DataDisistallazione is NULL or DataDisistallazione='0000-00-00') ; " ,sep="")
-print(query_risk)
+query_risk <- paste( "select a.IDstazione from A_Sensori as a, A_Sensori_specifiche as b where a.IDsensore=b.IDsensore and a.IDsensore in (",lista_pluviometri,") and (b.RiscVent='No' or b.RiscVent is NULL) and (DataDisistallazione is NULL or DataDisistallazione='0000-00-00') ; " ,sep="")
 risk <- try(dbGetQuery(conn, query_risk),silent=TRUE)
   if (inherits(risk,"try-error")) {
     cat(temp,"\n",file=file_log,append=T)
     quit(status=1)
   }
-print(risk)
 write(risk$IDstazione,file_risk,ncolumns=1)
 
 
