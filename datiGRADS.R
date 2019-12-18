@@ -380,7 +380,7 @@ dbUnloadDriver(drv)
 
 
 cat ( "PROGRAMMA ESEGUITO CON SUCCESSO alle ", date()," \n" , file = file_log , append = TRUE )
-cat ( "FIne --=---=-- getcsv_recenti.R =---=-----=---==-------fInE-=\n" , file = file_log,append=T)
+cat ( "FIne --=---=-- datiGRADS.R =---=-----=---==-------fInE-=\n" , file = file_log,append=T)
 
 quit(status=0)
 
