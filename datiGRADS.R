@@ -73,6 +73,18 @@ if (inherits(conn,"try-error")) {
   quit(status=1)
 }
 
+
+
+#cat("collegamento al DB\n",file=file_log,append=T)
+#MySQL(max.con=16,fetch.default.rec=500,force.reload=FALSE)
+
+#definisco driver
+#drv<-dbDriver("MySQL")
+
+#apro connessione con il db descritto nei parametri del gruppo "tabella_rif"
+#nel file "/home/meteo/.my.cnf
+#conn<-dbConnect(drv,group="Visualizzazione_Sinergico")
+
 #___________________________________________________
 #    query anagrafica
 #___________________________________________________
@@ -354,12 +366,14 @@ cat( "File datiGRADS.ctl e file datiGRADS.map scritti correttamente " ," \n\n" ,
 # genero un file 'pluvrisk.txt' con elenco dei pluviometri riscaldati
 #______________________________________________________
 
-query_risk <- paste( "select a.IDstazione from A_Sensori as a, A_Sensori_specifiche as b where a.IDsensore=b.IDsensore and a.IDsensore in (",lista_pluviometri,") and (b.RiscVent='No' or b.RiscVent is NULL) and (DataDisistallazione is NULL or DataDisistallazione='0000-00-00') ; " ,sep="")
+query_risk <- paste( "select a.IDstazione from A_Sensori as a, A_Sensori_specifiche as b where a.IDsensore=b.IDsensore and a.IDsensore in (",lista_pluviometri,") and b.RiscVent='Yes' and (DataDisistallazione is NULL or DataDisistallazione='0000-00-00') ; " ,sep="")
+#print(query_risk)
 risk <- try(dbGetQuery(conn, query_risk),silent=TRUE)
   if (inherits(risk,"try-error")) {
     cat(temp,"\n",file=file_log,append=T)
     quit(status=1)
   }
+
 write(risk$IDstazione,file_risk,ncolumns=1)
 
 
@@ -380,7 +394,7 @@ dbUnloadDriver(drv)
 
 
 cat ( "PROGRAMMA ESEGUITO CON SUCCESSO alle ", date()," \n" , file = file_log , append = TRUE )
-cat ( "FIne --=---=-- datiGRADS.R =---=-----=---==-------fInE-=\n" , file = file_log,append=T)
+cat ( "FIne --=---=-- getcsv_recenti.R =---=-----=---==-------fInE-=\n" , file = file_log,append=T)
 
 quit(status=0)
 

@@ -1,7 +1,6 @@
-
 #!/bin/bash
 
-numsec=3600 # 1 h
+numsec=3600 # 1 h 
 sleep $numsec
 while [ 1 ]
 do
