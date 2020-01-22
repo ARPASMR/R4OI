@@ -1,4 +1,4 @@
-FROM centos6.10
+FROM centos:centos6.10
 RUN yum update
 RUN yum install -y gcc
 WORKDIR /usr/src/myapp
