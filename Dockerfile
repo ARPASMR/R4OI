@@ -1,5 +1,5 @@
 FROM centos:centos6.10
-RUN yum update
+RUN yum update -y
 RUN yum install -y gcc
 WORKDIR /usr/src/myapp
 COPY * .
