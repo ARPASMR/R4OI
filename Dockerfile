@@ -1,6 +1,6 @@
 FROM centos:centos6.10
 RUN yum update -y
-RUN yum install -y gcc
+RUN yum install -y gcc gcc-gfortran
 WORKDIR /usr/src/myapp
 COPY * ./
 RUN gfortran -static --verbose -L/usr/lib/x86_64-redhat-linux5E/lib64 t2m19.f90 subs19.f90 subsf89.f SpatialStuff.f90 \ 
