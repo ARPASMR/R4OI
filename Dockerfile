@@ -5,3 +5,4 @@ WORKDIR /usr/src/myapp
 COPY * ./
 FROM builder
 RUN make
+CMD ["./launcher.sh"]
