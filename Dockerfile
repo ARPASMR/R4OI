@@ -3,6 +3,7 @@ RUN yum update -y
 RUN yum install -y gcc gcc-gfortran
 WORKDIR /usr/src/myapp
 COPY * ./
+RUN chmod a+x launcher.sh
 FROM builder
 RUN make
 CMD ["./launcher.sh"]
