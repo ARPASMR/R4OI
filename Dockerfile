@@ -4,6 +4,7 @@ RUN yum install -y gcc gcc-gfortran
 WORKDIR /usr/src/myapp
 COPY * ./
 RUN chmod a+x launcher.sh
+RUN chmod a+x datiGRADS.R
 FROM builder
 RUN make
 CMD ["./launcher.sh"]
