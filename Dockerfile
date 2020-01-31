@@ -1,4 +1,4 @@
-FROM centos:centos6.10 as builder
+FROM centos:centos7 as builder
 RUN yum update -y
 RUN yum install -y mysql-devel
 RUN yum install -y gcc-4.4.7 gcc-gfortran-4.4.7
