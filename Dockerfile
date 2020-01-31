@@ -13,7 +13,7 @@ RUN yum install -y grads
 RUN yum install -y python-pip
 #RUN yum install -y phyton3
 #RUN yum install -y setup-python3
-RUN pip install rasdapy
+#RUN pip install rasdapy
 #RUN pip3 install rasdapy
 WORKDIR /usr/src/myapp
 COPY * ./
