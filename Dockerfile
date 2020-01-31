@@ -1,4 +1,4 @@
-FROM centos:centos7 as builder
+FROM centos:centos7.7.1908 as builder
 RUN yum update -y
 RUN yum install -y mysql-devel
 RUN yum install -y gcc gcc-gfortran
@@ -13,7 +13,7 @@ RUN yum install -y grads
 RUN yum install -y python-pip
 #RUN yum install -y phyton3
 #RUN yum install -y setup-python3
-#RUN pip install rasdapy
+RUN pip install rasdapy
 #RUN pip3 install rasdapy
 WORKDIR /usr/src/myapp
 COPY * ./
