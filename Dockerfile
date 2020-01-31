@@ -20,5 +20,5 @@ COPY * ./
 RUN chmod a+x launcher.sh
 RUN chmod a+x datiGRADS.R
 FROM builder
-#RUN make
+#RUN make  
 CMD ["./launcher.sh"]
