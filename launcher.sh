@@ -14,7 +14,8 @@ do
     # upload in minio
     for dati in $ora_*.txt ; do 
       putS3 $dati "/" "analisi"
-      if [[ "$?" != "0" ]] then
+      if [[ "$?" != "0" ]] 
+      then
         echo "Errore nel caricare su MINIO il file " $dati
       else 
         "Caricato su MINIO il file " $dati
