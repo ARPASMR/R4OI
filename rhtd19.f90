@@ -543,9 +543,9 @@ program rhtd19
   !write (6,'(A)') ' ok?'
   !read (5,'(a1)') ans
 ! nome file per output ascii
-  FULFIASCIIa = OUTDIR(1:lodir) // datehr(n)(1:10) //'_rh_ana.txt'
-  FULFIASCIIb = OUTDIR(1:lodir) // datehr(n)(1:10) //'_rh_hdx.txt'
-  FULFIASCIIi = OUTDIR(1:lodir) // datehr(n)(1:10) //'_rh_idi.txt'
+  FULFIASCIIa = OUTDIR(1:lodir) // datehr(n)(1:10) //'_32632_rh_ana.txt'
+  FULFIASCIIb = OUTDIR(1:lodir) // datehr(n)(1:10) //'_32632_rh_hdx.txt'
+  FULFIASCIIi = OUTDIR(1:lodir) // datehr(n)(1:10) //'_32632_rh_idi.txt'
   write (6,'(A)') 'Nomi file ascii: ',FULFIASCIIa,FULFIASCIIb,FULFIASCIIi
 
 !-----------------------------------------------------------------------
