@@ -502,9 +502,9 @@ program plzln19
   call flush(6)
 !-----------------------------------------------------------------------
 ! nomi file per output ascii
-  FULFIASCIIa = OUTDIR(1:lodir) // datehr(n)(1:10) //'_prec_ana.txt'
-  FULFIASCIId = OUTDIR(1:lodir) // datehr(n)(1:10) //'_pidi_dry.txt'
-  FULFIASCIIw = OUTDIR(1:lodir) // datehr(n)(1:10) //'_pidi_wet.txt'
+  FULFIASCIIa = OUTDIR(1:lodir) // datehr(n)(1:10) //'_32632_prec_ana.txt'
+  FULFIASCIId = OUTDIR(1:lodir) // datehr(n)(1:10) //'_32632_pidi_dry.txt'
+  FULFIASCIIw = OUTDIR(1:lodir) // datehr(n)(1:10) //'_32632_pidi_wet.txt'
 
   ! write (6,'(A)') ' ok?'
   ! read (5,'(a1)') ans
