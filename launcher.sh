@@ -17,7 +17,7 @@ do
     # upload in minio
     for dati in $ora_*.txt ; do 
       echo "putS3 "." $dati "/" "analisi""
-      putS3 "." $dati "/" "analisi"
+      putS3 "." $dati "" "analisi"
       if [[ "$?" != "0" ]] 
       then
         echo "Errore nel caricare su MINIO il file " $dati
