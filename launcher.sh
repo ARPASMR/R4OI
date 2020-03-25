@@ -13,7 +13,7 @@ do
     ./plzln19 $ora 1 datiGRADS.dat 3 1 2 ./ ${ora:0:8}t2m_s.dat ./
     # upload in minio
     for dati in $ora_*.txt ; do 
-      putS3 ./ $dati "/" "analisi"
+      putS3 "." $dati "/" "analisi"
       if [[ "$?" != "0" ]] 
       then
         echo "Errore nel caricare su MINIO il file " $dati
