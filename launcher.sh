@@ -22,7 +22,7 @@ do
       then
         echo "Errore nel caricare su MINIO il file " $dati
       else 
-        "Caricato su MINIO il file " $dati
+        echo "Caricato su MINIO il file " $dati
         rm -v $dati
       fi
       rm -v temperatura_*.csv
