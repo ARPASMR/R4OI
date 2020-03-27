@@ -1,12 +1,12 @@
 #!/bin/bash
 source s3put.sh 
-numsec=600 # 1 h 
+numsec=1800 # 1/2 h 
 sleep $numsec
 while [ 1 ]
 do
   if [ $SECONDS -ge $numsec ]
   then
-    ora=$(date --date "3 hours ago" +%Y%m%d%H)
+    ora=$(date --date "2 hours ago" +%Y%m%d%H)
     echo "Chiedo i dati per "$ora
     ./datiGRADS.R $ora
     ./t2m19 $ora 1 datiGRADS.dat 3 2 ./ ./
@@ -16,7 +16,6 @@ do
     echo "Upload su minio..."
     # upload in minio
     for dati in $ora_*.txt ; do 
-      echo "putS3 "." $dati "/" "analisi""
       putS3 "." $dati "" "analisi"
       if [[ "$?" != "0" ]] 
       then
