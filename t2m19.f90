@@ -512,9 +512,9 @@ program t2m19
   write (6,*) ' '
   call flush(6)
 ! nome file per output ascii
-  FULFIASCIIa = OUTDIR(1:lodir) // datehr(n)(1:10) //'_32632_t2m_ana.txt'
-  FULFIASCIIb = OUTDIR(1:lodir) // datehr(n)(1:10) //'_32632_t2m_bkg.txt'
-  FULFIASCIIi = OUTDIR(1:lodir) // datehr(n)(1:10) //'_32632_t2m_idi.txt'
+  FULFIASCIIa = OUTDIR(1:lodir) // 't2m_ana_32632_' // datehr(n)(1:10) // '.txt'
+  FULFIASCIIb = OUTDIR(1:lodir) // 't2m_bkg_32632_' // datehr(n)(1:10) // '.txt'
+  FULFIASCIIi = OUTDIR(1:lodir) // 't2m_idi_32632_' // datehr(n)(1:10) // '.txt'
   write (6,'(A)') 'Nomi file ascii: ',FULFIASCIIa,FULFIASCIIb,FULFIASCIIi
   !write (6,'(A)') ' ok?'
   !read (5,'(a1)') ans
