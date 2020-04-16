@@ -29,16 +29,16 @@ do
         echo "Caricato su MINIO il file " $dati
         rm -v $dati
       fi
-      rm -v temperatura_*.csv
-      rm -v pluviometrizln_*.csv
-      rm -v umidita_*.csv
-      rm ${ora:0:8}t2m_s.dat
-      rm ${ora:0:8}t2m_g.dat
-      rm ${ora:0:8}tdrh_s.dat
-      rm ${ora:0:8}tdrh_g.dat
-      rm ${ora:0:8}plzln_s.dat
-      rm ${ora:0:8}plzln_g.dat
     done
+    rm -v temperatura_*.csv
+    rm -v pluviometrizln_*.csv
+    rm -v umidita_*.csv
+    rm -v ${ora:0:8}t2m_s.dat
+    rm -v ${ora:0:8}t2m_g.dat
+    rm -v ${ora:0:8}tdrh_s.dat
+    rm -v ${ora:0:8}tdrh_g.dat
+    rm -v ${ora:0:8}plzln_s.dat
+    rm -v ${ora:0:8}plzln_g.dat
     # inserire update DBMETEO
     SECONDS=0
     sleep $numsec
