@@ -1,5 +1,4 @@
 #!/bin/bash
-source s3put.sh 
 numsec=1800 # 1/2 h 
 sleep $numsec
 while [ 1 ]
@@ -21,8 +20,8 @@ do
     # upload in minio
     for dati in *_32632_$ora.txt ; do
       echo "file per upload:  "$dati 
-      putS3 "." $dati "" "analisi"
-      if [[ "$?" != "0" ]] 
+      s3cmd --config=config_minio.txt put $dati s3://analisi
+      if [[ "$?" -gt "1" ]] 
       then
         echo "Errore nel caricare su MINIO il file " $dati
       else 
