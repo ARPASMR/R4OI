@@ -8,6 +8,7 @@ RUN R -e "install.packages('DBI', repos = 'http://cran.us.r-project.org')"
 RUN R -e "install.packages('RMySQL', repos = 'http://cran.us.r-project.org')"
 RUN R -e "install.packages('readBrukerFlexData', repos = 'http://cran.us.r-project.org')"
 RUN yum install -y grads-2.0
+RUN yum install -y s3cmd
 WORKDIR /usr/src/myapp
 COPY * ./
 RUN chmod a+x launcher.sh
