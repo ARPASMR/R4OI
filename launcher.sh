@@ -38,6 +38,7 @@ do
     rm -v ${ora:0:8}tdrh_g.dat
     rm -v ${ora:0:8}plzln_s.dat
     rm -v ${ora:0:8}plzln_g.dat
+    rm -v RMS.txt 
     # inserire update DBMETEO
     SECONDS=0
     sleep $numsec
