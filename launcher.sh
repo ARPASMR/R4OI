@@ -8,6 +8,11 @@ do
     ora=$(date --date "2 hours ago" +%Y%m%d%H)
     echo "Chiedo i dati per "$ora
     ./datiGRADS.R $ora
+    if [[ "$?" -gt "0" ]]
+    then
+      logger --id --stderr --server $SYSLOG_MASTER -P $SYSLOG_PORT -T -p user.err -t OSSERVAZIONI_ELABORAZIONE "TAGMETEO R4OI errore nella richiesta DBMETEO o formattazione dati per $ora"
+      echo "Errore nella richiesta DBMETEO o formattazione dati per $ora"
+    fi
     ./t2m19 $ora 1 datiGRADS.dat 3 2 ./ ./  > t2m.log
     ./rhtd19 $ora 1 datiGRADS.dat 3 3 2 ./ ${ora:0:8}t2m_s.dat ${ora:0:8}t2m_g.dat ./  > rhtd.log
     ./plzln19 $ora 1 datiGRADS.dat 3 1 2 ./ ${ora:0:8}t2m_s.dat ./ > plzln.log
@@ -24,6 +29,7 @@ do
       if [[ "$?" -gt "1" ]] 
       then
         echo "Errore nel caricare su MINIO il file " $dati
+        logger --id --stderr --server $SYSLOG_MASTER -P $SYSLOG_PORT -T -p user.warning -t OSSERVAZIONI_ELABORAZIONE "TAGMETEO R4OI errore upload su minio del file $dati"
       else 
         echo "Caricato su MINIO il file " $dati
         rm -v $dati
