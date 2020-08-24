@@ -46,6 +46,7 @@ do
     rm -v ${ora:0:8}plzln_g.dat
     rm -v RMS.txt 
     # inserire update DBMETEO
+    logger --id --stderr --server $SYSLOG_MASTER -P $SYSLOG_PORT -T -p user.info -t OSSERVAZIONI_ELABORAZIONE "TAGMETEO R4OI finito interpolazione $ora"
     SECONDS=0
     sleep $numsec
   fi
