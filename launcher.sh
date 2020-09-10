@@ -10,7 +10,7 @@ do
     ./datiGRADS.R $ora
     if [[ "$?" -gt "0" ]]
     then
-      logger -id -stderr -server $SYSLOG_MASTER -P $SYSLOG_PORT -T -p user.err -t OSSERVAZIONI_ELABORAZIONE "TAGMETEO R4OI errore nella richiesta DBMETEO o formattazione dati per $ora"
+      logger --id --stderr --server $SYSLOG_MASTER -P $SYSLOG_PORT -T -p user.err -t OSSERVAZIONI_ELABORAZIONE "TAGMETEO R4OI errore nella richiesta DBMETEO o formattazione dati per $ora"
       echo "Errore nella richiesta DBMETEO o formattazione dati per $ora"
     fi
     ./t2m19 $ora 1 datiGRADS.dat 3 2 ./ ./  > t2m.log
@@ -29,7 +29,7 @@ do
       if [[ "$?" -gt "1" ]] 
       then
         echo "Errore nel caricare su MINIO il file " $dati
-        logger -id -stderr -server $SYSLOG_MASTER -P $SYSLOG_PORT -T -p user.warning -t OSSERVAZIONI_ELABORAZIONE "TAGMETEO R4OI errore upload su minio del file $dati"
+        logger --id --stderr --server $SYSLOG_MASTER -P $SYSLOG_PORT -T -p user.warning -t OSSERVAZIONI_ELABORAZIONE "TAGMETEO R4OI errore upload su minio del file $dati"
       else 
         echo "Caricato su MINIO il file " $dati
         rm -v $dati
@@ -46,7 +46,7 @@ do
     rm -v ${ora:0:8}plzln_g.dat
     rm -v RMS.txt 
     # inserire update DBMETEO
-    logger -id -stderr -server $SYSLOG_MASTER -P $SYSLOG_PORT -T -p user.info -t OSSERVAZIONI_ELABORAZIONE "TAGMETEO R4OI finito interpolazione $ora"
+    logger --id --stderr --server $SYSLOG_MASTER -P $SYSLOG_PORT -T -p user.info -t OSSERVAZIONI_ELABORAZIONE "TAGMETEO R4OI finito interpolazione $ora"
     SECONDS=0
     sleep $numsec
   fi
